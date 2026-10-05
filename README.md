@@ -1,1 +1,1 @@
-# practica-proxmox
+# Digitalización aplicada a los sectores productivos
