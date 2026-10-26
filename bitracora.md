@@ -21,6 +21,6 @@ El inventario completo de la infraestructura se encuentra documentado en el fich
 * **URL del Repositorio:** [https://github.com/carlosvelascosala27-sys/practica-proxmox](https://github.com/carlosvelascosala27-sys/practica-proxmox)
 
 ### Resumen de la Configuración
-* **Máquina `dev.grupoN` (VM 101):** IP estática `192.168.50.11/24` (2 vCPU, 1 GB RAM, 15 GB Disco).
-* **Máquina `pro.grupoN` (VM 102):** IP estática `192.168.50.12/24` (2 vCPU, 1 GB RAM, 15 GB Disco).
+* **Máquina `dev.grupo3` (VM 101):** IP estática `192.168.50.11/24` (2 vCPU, 1 GB RAM, 15 GB Disco).
+* **Máquina `pro.grupo3` (VM 102):** IP estática `192.168.50.12/24` (2 vCPU, 1 GB RAM, 15 GB Disco).
 * **Verificación:** Conectividad bidireccional comprobada mediante `ping` con un 0% de pérdida de paquetes.
