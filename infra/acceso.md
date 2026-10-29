@@ -54,7 +54,36 @@ Resultado: pidió contraseña. La prueba se hizo sin clave privada en la VM, por
 
 ## 4. Clave de Anass Belghiti
 
-Pendiente. Anass genera su clave en su equipo (Mac), que no tiene memoria suficiente para tener la VM.
+Anass no puede tener una VM propia porque su equipo (Mac) no tiene memoria suficiente. Desde el Mac hizo la parte que no necesita servidor.
+
+Clave generada en el Mac el 29/10/2026:
+
+```
+ssh-keygen -t ed25519 -C "anass@grupo3"
+```
+
+Se usaron las rutas por defecto (`~/.ssh/id_ed25519` y `~/.ssh/id_ed25519.pub`) y sin passphrase.
+
+Huella: `SHA256:/71V1LmlCdHlOmF8S0lDNxlIvQ8WUiuyGkCMFVySBd0`
+
+Clave pública:
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICQFpLhbgn2mG0kblD6UFgfU3Nh1kx7gXUAb9eMTVFkZ anass@grupo3
+```
+
+La clave pública se envía a Carlos para añadirla a `~/.ssh/authorized_keys` de `c27` en la VM.
+
+Pendiente:
+
+- Añadir la clave a `authorized_keys` en la VM (Carlos) y comprobar la entrada sin contraseña. Depende de tener acceso a la red del instituto.
+- Clonar el tablón y leer el README para saber qué se instala y cómo se arranca la API:
+
+  ```
+  git clone https://github.com/esrora/tablon-avisos.git
+  ```
+
+- Avisar al profesor de que Anass no puede tener una VM propia y preguntarle cómo quiere que entregue su parte.
 
 ## 5. Desactivar la contraseña en SSH
 
@@ -75,10 +104,6 @@ cd ~/tablon-avisos/api && cp .env.example .env && npm install
 node --env-file=.env server.js
 curl http://localhost:3000/api/version
 ```
-
-## 7. Captura de /api/version
-
-No entregada. Pendiente de completar en el instituto.
 
 ## 7. Captura de /api/version
 
