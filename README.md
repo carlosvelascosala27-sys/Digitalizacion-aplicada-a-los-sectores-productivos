@@ -18,4 +18,4 @@ Repositorio de la práctica de la asignatura Digitalización aplicada a los sect
 
 - **A1.1:** completada en `bitacora.md`.
 - **A1.2:** inventario de máquinas en `infra/maquinas.md`.
-- **A1.3:** documentada en `infra/acceso.md`, con apartados pendientes por falta de conexión a la red del instituto.
+- **A1.3:** documentada en `infra/acceso.md`, realizada en local sobre un Proxmox propio en VirtualBox.
