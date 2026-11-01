@@ -13,6 +13,7 @@ Repositorio de la práctica de la asignatura Digitalización aplicada a los sect
 | `bitacora.md` | Bitácora de la práctica A1.1 (punto de partida). |
 | `infra/maquinas.md` | Inventario de máquinas del grupo (A1.2). |
 | `infra/acceso.md` | Acceso y entorno de desarrollo (A1.3). |
+| `infra/produccion.md` | Endurecimiento de la máquina de producción (A1.4). |
 
 ## Estado de las actividades
 
