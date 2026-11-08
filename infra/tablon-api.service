@@ -1,0 +1,19 @@
+[Unit]
+Description=API del tablon de avisos
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=tablon
+Group=tablon
+WorkingDirectory=/opt/tablon/api
+EnvironmentFile=/opt/tablon/api/.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
