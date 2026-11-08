@@ -166,4 +166,4 @@ Desde el navegador del PC:
 - `http://pro.grupo3/api/version`: `{"version":"1.0.0","commit":"930b528","entorno":"produccion","minClientVersion":"0.0.0"}`
 - `http://pro.grupo3/`: el tablón muestra los 3 avisos y la versión abajo.
 
-![Tablón en pro.grupo3](captura-tablon.png)
+![Tablón en pro.grupo3](Captura%20de%20pantalla%202026-11-08%20230756.png)
