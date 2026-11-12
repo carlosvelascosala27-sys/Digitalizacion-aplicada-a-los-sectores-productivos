@@ -2,15 +2,24 @@
 
 **Alumnos:** Carlos Velasco Sala y Anass Belghiti
 
-**Máquina:** dev.grupo3 (VM 101, nodo Proxmox `hilario`), IP 192.168.50.11, usuario `c27`
+**Máquina:** dev.grupo3 (VM 119, Proxmox del instituto), IP 192.168.205.114 (DHCP), usuario `c27`
 
 ## Entorno
 
-La práctica se ha hecho en local, sobre un Proxmox propio instalado en VirtualBox en el PC de Carlos. `dev.grupo3` es la VM 101 de ese Proxmox, no una máquina del aula.
+La práctica se hizo primero en un Proxmox local y después se repitió en el Proxmox del instituto. Este documento recoge lo hecho en el instituto. Las órdenes de cada apartado indican en qué máquina se ejecutaron.
 
-Las órdenes del paso 1 se ejecutaron desde el PC con Windows. Las de los pasos siguientes se ejecutaron en el nodo o en la VM, como se indica en cada uno.
+## 1. Nombre de la máquina
 
-## 1. Pares de claves
+En `dev.grupo3`:
+
+```
+sudo hostnamectl set-hostname dev.grupo3
+sudo sed -i -E 's/^127\.0\.1\.1.*/127.0.1.1\tdev.grupo3 dev/' /etc/hosts
+```
+
+Resultado: `hostname` devuelve `dev.grupo3` y `sudo` ya no avisa de `unable to resolve host`.
+
+## 2. Pares de claves
 
 Carlos (Windows):
 
@@ -26,141 +35,106 @@ ssh-keygen -t ed25519 -C "anass@grupo3"
 
 Se usaron las rutas por defecto y sin passphrase.
 
-## 2. Problemas de red encontrados y corrección
+## 3. Claves públicas en dev.grupo3
 
-El primer intento no funcionó por tres motivos:
-
-- El nodo usaba la puerta de enlace `10.0.2.2`, pero la `NatNetwork` de VirtualBox usa `10.0.2.1`.
-- Nadie hacía de router en la red `192.168.50.0/24`, y la VM no tenía puerta de enlace.
-- A la clave pública de Carlos en `authorized_keys` le faltaba un carácter, por lo que no podía funcionar.
-
-En el nodo `hilario`, `/etc/network/interfaces` quedó así en `vmbr0`:
+Carlos copió su clave desde PowerShell. Fue la única vez que se usó la contraseña de `c27`:
 
 ```
-auto vmbr0
-iface vmbr0 inet static
-	address 10.0.2.15/24
-	address 192.168.50.1/24
-	gateway 10.0.2.1
-	bridge-ports nic0
-	bridge-stp off
-	bridge-fd 0
-	post-up sysctl -w net.ipv4.ip_forward=1
-	post-up iptables -t nat -C POSTROUTING -s 192.168.50.0/24 ! -d 192.168.50.0/24 -o vmbr0 -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s 192.168.50.0/24 ! -d 192.168.50.0/24 -o vmbr0 -j MASQUERADE
-	post-up iptables -t nat -C PREROUTING -d 10.0.2.15 -p tcp --dport 2211 -j DNAT --to-destination 192.168.50.11:22 2>/dev/null || iptables -t nat -A PREROUTING -d 10.0.2.15 -p tcp --dport 2211 -j DNAT --to-destination 192.168.50.11:22
-	post-up iptables -t nat -C PREROUTING -d 10.0.2.15 -p tcp --dport 3000 -j DNAT --to-destination 192.168.50.11:3000 2>/dev/null || iptables -t nat -A PREROUTING -d 10.0.2.15 -p tcp --dport 3000 -j DNAT --to-destination 192.168.50.11:3000
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh c27@192.168.205.114 "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 ```
 
-```
-ifreload -a
-```
-
-En el PC, redirección de puertos en VirtualBox (solo accesibles desde el propio PC):
+La clave de Anass se añadió en `dev.grupo3`:
 
 ```
-VBoxManage natnetwork modify --netname NatNetwork --port-forward-4 "pve-ssh:tcp:[127.0.0.1]:2222:[10.0.2.15]:22"
-VBoxManage natnetwork modify --netname NatNetwork --port-forward-4 "dev-ssh:tcp:[127.0.0.1]:2211:[10.0.2.15]:2211"
-VBoxManage natnetwork modify --netname NatNetwork --port-forward-4 "dev-api:tcp:[127.0.0.1]:3000:[10.0.2.15]:3000"
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICQFpLhbgn2mG0kblD6UFgfU3Nh1kx7gXUAb9eMTVFkZ anass@grupo3" >> ~/.ssh/authorized_keys
+ssh-keygen -lf ~/.ssh/authorized_keys
 ```
 
-Antes de cambiar la VM se hizo una instantánea desde el nodo:
+Salida:
 
 ```
-qm snapshot 101 antes-a13 --description "Antes de A1.3 local"
+256 SHA256:Xi3L7kizgD1asLXclNR6Eh/Y+R0ap4Vj/qMi0QyJ5w0 carlos@DESKTOP-SV5O6RJ (ED25519)
+256 SHA256:/71V1LmlCdHlOmF8S0lDNxlIvQ8WUiuyGkCMFVySBd0 anass@grupo3 (ED25519)
 ```
 
-En la VM, con el disco montado desde el nodo y la VM apagada, se hicieron estos cambios:
-
-- `/etc/network/interfaces`: se añadió `gateway 192.168.50.1` a `ens18`.
-- `/etc/resolv.conf`: `nameserver 1.1.1.1` y `nameserver 8.8.8.8`.
-- `/etc/hostname` y `/etc/hosts`: nombre `dev.grupo3`.
-- `/home/c27/.ssh/authorized_keys`: claves correctas de Carlos y Anass.
-- `/root/.ssh/authorized_keys`: clave temporal de Carlos para instalar como root. Se borró al terminar y root ya no entra por SSH.
-
-## 3. Comprobación de las claves
-
-Desde el PC de Carlos:
+Comprobación desde el PC de Carlos:
 
 ```
-ssh -p 2211 c27@127.0.0.1
+ssh c27@192.168.205.114
 ```
 
 Resultado: entra sin contraseña.
 
-Clave de Anass, en la VM:
+Anass lo comprobó desde su Mac con `ssh c27@192.168.205.114`. En el registro de `dev.grupo3` consta su entrada con clave:
 
 ```
-ssh-keygen -lf ~/.ssh/authorized_keys
+sudo journalctl -u ssh --no-pager | grep "Accepted publickey"
 ```
 
-Resultado: su huella coincide con la generada en el Mac (`SHA256:/71V1LmlCdHlOmF8S0lDNxlIvQ8WUiuyGkCMFVySBd0`).
-
-**Pendiente:** Anass no ha probado la entrada desde su Mac, porque el acceso solo está abierto desde el PC de Carlos. El grupo tiene dos miembros, así que hay dos claves.
+```
+2026-11-12T16:17:59+01:00 dev.grupo3 sshd-session[13524]: Accepted publickey for c27 from 192.168.205.110 port 51923 ssh2: ED25519 SHA256:/71V1LmlCdHlOmF8S0lDNxlIvQ8WUiuyGkCMFVySBd0
+```
 
 ## 4. Desactivar la contraseña en SSH
 
-En la VM, con una sesión de reserva abierta:
+Antes de desactivarla se comprobó que la clave funcionaba. Además, la consola de Proxmox servía de acceso de reserva.
+
+En `dev.grupo3`:
 
 ```
-cat > /etc/ssh/sshd_config.d/00-sin-password.conf <<'C'
-PasswordAuthentication no
-KbdInteractiveAuthentication no
-C
-sshd -t && systemctl reload ssh
+printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\n' | sudo tee /etc/ssh/sshd_config.d/00-sin-password.conf
+sudo sshd -t && sudo systemctl reload ssh
+sudo sshd -T | grep -E '^(passwordauthentication|kbdinteractiveauthentication|pubkeyauthentication) '
+```
+
+Salida:
+
+```
+pubkeyauthentication yes
+passwordauthentication no
+kbdinteractiveauthentication no
 ```
 
 Comprobación desde el PC:
 
 ```
-ssh -p 2211 c27@127.0.0.1
-ssh -p 2211 -o PubkeyAuthentication=no -o PreferredAuthentications=password c27@127.0.0.1
+ssh c27@192.168.205.114
+ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive c27@192.168.205.114
 ```
 
 Resultado: la primera entra con clave y la segunda devuelve `Permission denied (publickey)`.
 
 ## 5. Instalación
 
-En la VM, como root:
+En `dev.grupo3`:
 
 ```
-apt-get update
-apt-get install -y --no-install-recommends sudo git curl ca-certificates postgresql nodejs npm
-usermod -aG sudo c27
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends postgresql nodejs npm git curl ca-certificates
 ```
 
-Versiones instaladas: Node 20.19.2, npm 9.2.0 y PostgreSQL 17.11.
+Versiones: Node 20.19.2, npm 9.2.0 y PostgreSQL 17.11.
 
 ## 6. Clonado y base de datos
 
-Como `c27`:
+En `dev.grupo3`:
 
 ```
-cd ~
 git clone https://github.com/esrora/tablon-avisos.git
-```
-
-Como root:
-
-```
 cd /tmp
-sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE tablon LOGIN PASSWORD 'tablon';"
+sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE tablon LOGIN PASSWORD '<la de api/.env.example>';"
 sudo -u postgres createdb tablon --owner=tablon
-```
-
-Como `c27`:
-
-```
 cd ~/tablon-avisos
-PGPASSWORD=tablon psql -v ON_ERROR_STOP=1 -h localhost -U tablon -d tablon -f db/init.sql
+psql -v ON_ERROR_STOP=1 -h localhost -U tablon -d tablon -f db/init.sql
 ```
 
-Nota: el primer intento con `sudo -u postgres psql -f` no creó las tablas, porque `postgres` no puede leer dentro de `/home/c27`. La contraseña `tablon` es la de `.env.example`, válida solo para este entorno de desarrollo.
+La contraseña del rol `tablon` es la que trae `api/.env.example`, válida solo para desarrollo. `init.sql` se ejecuta con el usuario `tablon` porque `postgres` no puede leer dentro de `/home/c27`.
 
 Resultado: tabla `avisos` creada con 3 avisos de ejemplo.
 
 ## 7. Arranque de la API
 
-Como `c27`:
+En `dev.grupo3`:
 
 ```
 cd ~/tablon-avisos/api
@@ -169,11 +143,19 @@ npm install
 nohup node --env-file=.env server.js > ~/api.log 2>&1 &
 ```
 
+Salida de `~/api.log`:
+
+```
+Base de datos disponible
+API del tablon escuchando en el puerto 3000
+Version 0.0.0-dev (sin-commit) en entorno desarrollo
+```
+
 Comprobación desde el navegador del PC:
 
-- `http://localhost:3000/api/version`: `{"version":"0.0.0-dev","commit":"sin-commit","entorno":"desarrollo","minClientVersion":"0.0.0"}`
-- `http://localhost:3000/api/avisos`: devuelve los 3 avisos de ejemplo.
+- `http://192.168.205.114:3000/api/version`: `{"version":"0.0.0-dev","commit":"sin-commit","entorno":"desarrollo","minClientVersion":"0.0.0"}`
+- `http://192.168.205.114:3000/api/avisos`: devuelve los 3 avisos de ejemplo.
 
 ## 8. Captura de /api/version
 
-![/api/version respondiendo desde dev.grupo3](api-version.png)
+![/api/version respondiendo desde dev.grupo3](captura-api-version-instituto.png)
